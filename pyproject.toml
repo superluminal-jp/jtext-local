@@ -1,0 +1,155 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jtext"
+version = "1.0.0"
+description = "High-precision local text extraction for Japanese documents, images, and audio"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "jtext Development Team", email = "dev@jtext.local"},
+]
+keywords = ["ocr", "asr", "japanese", "text-processing", "tesseract", "whisper", "llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
+dependencies = [
+    "click>=8.1.7",
+    "pydantic>=2.4.2",
+    "loguru>=0.7.2",
+            "unstructured[all-docs]>=0.10.30",
+            "pymupdf>=1.23.8",
+            "pytesseract>=0.3.10",
+            "python-docx>=0.8.11",
+            "python-pptx>=0.6.21",
+            "html2text>=2020.1.16",
+    "opencv-python>=4.8.0",
+    "pillow>=10.0.1",
+    "scikit-image>=0.21.0",
+    "faster-whisper>=0.9.0",
+    "ffmpeg-python>=0.2.0",
+            "ollama>=0.1.7",
+            "transformers>=4.35.0",
+            "psutil>=5.9.6",
+            "numpy>=1.24.3",
+            "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.3",
+    "pytest-cov>=4.1.0",
+    "black>=23.9.1",
+    "flake8>=6.1.0",
+    "mypy>=1.6.1",
+]
+
+[project.scripts]
+jtext = "jtext.cli:cli"
+
+[project.urls]
+Homepage = "https://github.com/jtext/jtext-local"
+Repository = "https://github.com/jtext/jtext-local"
+Documentation = "https://github.com/jtext/jtext-local/wiki"
+"Bug Reports" = "https://github.com/jtext/jtext-local/issues"
+
+[tool.black]
+line-length = 88
+target-version = ['py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "pytesseract.*",
+    "cv2.*",
+    "PIL.*",
+    "psutil.*",
+    "loguru.*",
+    "click.*",
+    "pydantic.*",
+    "unstructured.*",
+    "faster_whisper.*",
+    "ffmpeg.*",
+    "ollama.*",
+    "transformers.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "--cov=jtext",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-fail-under=80",
+]
+
+[tool.coverage.run]
+source = ["jtext"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/migrations/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
