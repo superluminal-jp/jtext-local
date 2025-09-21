@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from .core.ocr_hybrid import HybridOCR
+from .core.multimodal_ocr import MultimodalOCR
 from .processing.document_extractor import DocumentExtractor
 from .transcription.audio_transcriber import AudioTranscriber
 from .utils.logging import setup_logging
@@ -58,13 +59,21 @@ def cli(ctx: click.Context, verbose: bool, output_dir: str) -> None:
 @click.argument("images", nargs=-1, type=click.Path(exists=True))
 @click.option("--lang", default="jpn+eng", help="OCR language (default: jpn+eng)")
 @click.option("--llm-correct", is_flag=True, help="Enable LLM correction")
+@click.option("--vision", is_flag=True, help="Enable vision analysis")
 @click.option("--model", default="gpt-oss", help="LLM model for correction")
+@click.option("--vision-model", default="llava", help="Vision model for image analysis")
 @click.pass_context
 def ocr(
-    ctx: click.Context, images: List[str], lang: str, llm_correct: bool, model: str
+    ctx: click.Context, 
+    images: List[str], 
+    lang: str, 
+    llm_correct: bool, 
+    vision: bool,
+    model: str,
+    vision_model: str
 ) -> None:
     """
-    Extract text from images using OCR with optional LLM correction.
+    Extract text from images using advanced OCR with vision analysis and LLM correction.
 
     IMAGES: One or more image files to process
     """
@@ -72,12 +81,22 @@ def ocr(
         click.echo("Error: No image files specified", err=True)
         raise click.Abort()
 
-    click.echo(f"Processing {len(images)} image(s) with OCR...")
+    click.echo(f"Processing {len(images)} image(s) with {'multimodal ' if vision else ''}OCR...")
 
     # Initialize OCR processor
-    ocr_processor = HybridOCR(
-        llm_model=model if llm_correct else None, enable_correction=llm_correct
-    )
+    if vision:
+        ocr_processor = MultimodalOCR(
+            llm_model=model if llm_correct else None,
+            vision_model=vision_model,
+            enable_correction=llm_correct,
+            enable_vision=vision
+        )
+        click.echo(f"Using multimodal OCR with vision model: {vision_model}")
+    else:
+        ocr_processor = HybridOCR(
+            llm_model=model if llm_correct else None, 
+            enable_correction=llm_correct
+        )
 
     # Process each image
     for image_path in images:
@@ -88,6 +107,12 @@ def ocr(
             # Save results
             output_path = ctx.obj["output_dir"] / Path(image_path).stem
             save_results(result, output_path)
+
+            # Show processing details
+            if hasattr(result, 'fusion_method'):
+                click.echo(f"  Fusion method: {result.fusion_method}")
+            if hasattr(result, 'vision_analysis') and result.vision_analysis:
+                click.echo(f"  Vision analysis: {result.vision_analysis.get('model', 'N/A')}")
 
             click.echo(f"✓ Completed: {output_path}.txt")
 

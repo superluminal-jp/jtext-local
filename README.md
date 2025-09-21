@@ -21,6 +21,7 @@ A high-precision local text extraction system for Japanese documents, images, an
 - **Audio Transcription**: Whisper-based ASR for Japanese and English audio
 - **Enhanced LLM Integration**: Ollama integration for real-time correction
 - **Context-Aware Correction**: Intelligent correction based on document type and context
+- **Multimodal OCR**: Vision-language models combined with traditional OCR for optimal accuracy
 - **Multi-Format Support**: Images, Documents, Audio with unified processing pipeline
 
 ### System Features
@@ -80,6 +81,9 @@ jtext ocr document.png
 # Process multiple images with LLM correction
 jtext ocr --llm-correct image1.jpg image2.png
 
+# Process with vision analysis and LLM correction
+jtext ocr --vision --llm-correct --vision-model llava document.png
+
 # Specify output directory
 jtext ocr --output-dir ./results document.png
 ```
@@ -109,12 +113,14 @@ jtext ocr <images...> [OPTIONS]
 Arguments:
   IMAGES...  One or more image files to process
 
-Options:
-  --lang TEXT           OCR language (default: jpn+eng)
-  --llm-correct         Enable LLM correction
-  --model TEXT          LLM model for correction (default: gpt-oss)
-  --output-dir PATH     Output directory (default: ./out)
-  --verbose, -v         Enable verbose logging
+        Options:
+          --lang TEXT           OCR language (default: jpn+eng)
+          --llm-correct         Enable LLM correction
+          --vision              Enable vision analysis
+          --model TEXT          LLM model for correction (default: gpt-oss)
+          --vision-model TEXT   Vision model for image analysis (default: llava)
+          --output-dir PATH     Output directory (default: ./out)
+          --verbose, -v         Enable verbose logging
 ```
 
 **Supported Image Formats**: JPEG, PNG, TIFF, BMP, GIF
