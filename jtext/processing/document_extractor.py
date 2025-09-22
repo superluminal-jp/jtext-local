@@ -129,6 +129,12 @@ class DocumentExtractor:
             doc = fitz.open(file_path)
             metadata["pages"] = len(doc)
 
+            # Add document metadata if available
+            if hasattr(doc, "metadata") and doc.metadata:
+                for key, value in doc.metadata.items():
+                    if value:  # Only add non-empty values
+                        metadata[key] = value
+
             for page_num in range(len(doc)):
                 page = doc.load_page(page_num)
                 page_text = page.get_text()

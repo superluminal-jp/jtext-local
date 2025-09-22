@@ -32,6 +32,7 @@ class TestDocumentExtractor:
         # Mock PDF document
         mock_doc = Mock()
         mock_doc.__len__ = Mock(return_value=3)  # 3 pages
+        mock_doc.metadata = {"title": "Test Document", "author": "Test Author"}
         mock_page = Mock()
         mock_page.get_text.return_value = "Sample PDF text"
         mock_page.get_images.return_value = [("img1", 0, 0, 0, 0, 0)]

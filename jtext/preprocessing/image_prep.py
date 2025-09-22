@@ -153,10 +153,16 @@ class ImagePreprocessor:
         # Convert to float32 for processing
         normalized = image.astype(np.float32)
 
+        # Handle uniform images (avoid division by zero)
+        min_val = normalized.min()
+        max_val = normalized.max()
+
+        if max_val == min_val:
+            # Uniform image - return as is
+            return image
+
         # Normalize to 0-1 range
-        normalized = (normalized - normalized.min()) / (
-            normalized.max() - normalized.min()
-        )
+        normalized = (normalized - min_val) / (max_val - min_val)
 
         # Convert back to uint8
         normalized = (normalized * 255).astype(np.uint8)
