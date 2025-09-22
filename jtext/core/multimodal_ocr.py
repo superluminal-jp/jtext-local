@@ -284,18 +284,73 @@ class MultimodalOCR:
             return None
 
     def _create_vision_prompt(self) -> str:
-        """Create prompt for vision analysis."""
-        return """
-この画像を詳しく分析し、以下の情報を提供してください：
+        """Create comprehensive vision analysis prompt following best practices."""
+        return """あなたは画像解析の専門家です。この画像を総合的に分析し、OCR処理の精度向上に必要な情報を提供してください。
 
-1. 画像の内容の説明
-2. 含まれているテキスト（可能な限り正確に）
-3. 文書の種類（技術文書、手紙、表、図表など）
-4. レイアウトの特徴
-5. 読み取りにくい部分や注意点
+# 分析指示
 
-日本語で回答してください。
-"""
+## 1. 文書タイプの識別
+以下のいずれかを明確に判定してください：
+- 技術文書（仕様書、マニュアル、API文書など）
+- 学術論文（研究論文、学会資料など）
+- ビジネス文書（報告書、プレゼン資料など）
+- 表・図表（データ表、グラフ、チャートなど）
+- 一般文書（記事、ブログ、その他）
+
+## 2. レイアウト構造の詳細分析
+### 構造要素の特定：
+- 表の有無と構造（行数、列数、ヘッダー）
+- リスト・箇条書きの階層
+- 段落の区切りと構造
+- 図表・画像の配置
+- ヘッダー・フッターの存在
+
+### 文字情報の分析：
+- 主要言語（日本語、英語、混在）
+- フォントサイズの変化
+- 太字・斜体の使用
+- 文字密度と読みやすさ
+
+## 3. OCR課題の予測
+以下の観点から潜在的な問題を特定：
+- 文字が不鮮明な箇所
+- 背景とのコントラストが低い部分
+- 小さすぎるフォント
+- 手書き文字の混在
+- 特殊文字・記号の使用
+
+## 4. 専門用語・固有名詞の識別
+- 技術用語の種類と分野
+- 企業名・製品名
+- 人名・地名
+- 略語・英数字混在語
+
+# 出力形式
+
+**文書タイプ**: [識別されたタイプ]
+
+**レイアウト構造**:
+- 表: [有無、構造詳細]
+- リスト: [有無、階層情報]
+- 段落: [構造と区切り]
+- その他: [特徴的な要素]
+
+**文字・言語情報**:
+- 主要言語: [言語]
+- フォント特徴: [サイズ、装飾など]
+- 文字品質: [鮮明度、コントラスト]
+
+**OCR注意事項**:
+- 課題となりそうな箇所
+- 専門用語・固有名詞のリスト
+- 推奨される処理方針
+
+**テキスト内容の概要**:
+- 主題・トピック
+- 重要なキーワード
+- 文書の目的・意図
+
+日本語で詳細かつ構造化された分析結果を提供してください。"""
 
     def _fuse_and_correct(
         self,
@@ -326,12 +381,19 @@ class MultimodalOCR:
             corrected_text, corrections_applied = self._multimodal_fusion_correction(
                 ocr_text, vision_analysis, image_path
             )
-            
+
             correction_ratio = corrections_applied / len(ocr_text) if ocr_text else 0.0
-            return corrected_text, corrections_applied, correction_ratio, "multimodal_fusion"
-            
+            return (
+                corrected_text,
+                corrections_applied,
+                correction_ratio,
+                "multimodal_fusion",
+            )
+
         except Exception as e:
-            logger.warning(f"Multimodal fusion failed, falling back to context-aware correction: {e}")
+            logger.warning(
+                f"Multimodal fusion failed, falling back to context-aware correction: {e}"
+            )
             # Fallback to context-aware correction
             return self._context_aware_fusion_fallback(ocr_text, vision_analysis)
 
@@ -350,17 +412,17 @@ class MultimodalOCR:
     ) -> Tuple[str, int]:
         """
         Perform comprehensive multimodal fusion correction using vision model.
-        
+
         This method combines:
         1. OCR extracted text
         2. Vision analysis results
         3. Original image
         4. Contextual metadata
-        
+
         To produce the most accurate and coherent text output.
         """
         logger.debug("Starting multimodal fusion correction")
-        
+
         try:
             # Encode image to base64 for multimodal input
             with open(image_path, "rb") as image_file:
@@ -395,14 +457,20 @@ class MultimodalOCR:
             if response.status_code == 200:
                 result = response.json()
                 corrected_text = result.get("response", "").strip()
-                
+
                 # Clean up the response
-                corrected_text = self._clean_multimodal_response(corrected_text, ocr_text)
-                
+                corrected_text = self._clean_multimodal_response(
+                    corrected_text, ocr_text
+                )
+
                 # Calculate corrections
-                corrections_applied = self._calculate_corrections(ocr_text, corrected_text)
-                
-                logger.info(f"Multimodal fusion completed: {corrections_applied} corrections applied")
+                corrections_applied = self._calculate_corrections(
+                    ocr_text, corrected_text
+                )
+
+                logger.info(
+                    f"Multimodal fusion completed: {corrections_applied} corrections applied"
+                )
                 return corrected_text, corrections_applied
             else:
                 logger.error(f"Multimodal fusion failed: {response.status_code}")
@@ -417,77 +485,105 @@ class MultimodalOCR:
     ) -> str:
         """
         Create comprehensive multimodal fusion prompt following best practices.
-        
+
         This prompt combines all available information to produce the most accurate result.
         """
         vision_analysis_text = vision_analysis.get("analysis", "")
         document_type = self._extract_document_type(vision_analysis)
         layout_info = self._extract_layout_info(vision_analysis)
-        
+
         # Build context information
         context_info = []
         if document_type != "general":
             context_info.append(f"文書タイプ: {document_type}")
-        
+
         if layout_info.get("has_tables"):
             context_info.append("表が含まれています")
         if layout_info.get("has_lists"):
             context_info.append("リストが含まれています")
         if layout_info.get("has_images"):
             context_info.append("画像が含まれています")
-        
+
         context_str = "、".join(context_info) if context_info else "一般的な文書"
-        
-        return f"""あなたは高精度なOCR修正専門家です。以下の情報を総合的に分析し、最も正確で自然な日本語テキストを出力してください。
 
-## 分析対象情報
+        return f"""あなたは最先端のマルチモーダルOCR修正専門家です。OCR抽出テキスト、画像分析結果、原画像の3つの情報源を統合し、最高精度のテキスト修正を実行してください。
 
-### 1. OCR抽出テキスト（修正対象）
+# マルチモーダル情報統合
+
+## 📊 データソース
+
+### 🔤 OCR抽出テキスト（一次データ）
 ```
 {ocr_text}
 ```
 
-### 2. 画像分析結果
+### 👁️ 画像分析結果（コンテキスト情報）
+```
 {vision_analysis_text}
+```
 
-### 3. 文書コンテキスト
-- {context_str}
-- レイアウトタイプ: {layout_info.get('layout_type', 'freeform')}
+### 📋 文書メタデータ（構造情報）
+- **文書タイプ**: {context_str}
+- **レイアウト**: {layout_info.get('layout_type', 'フリーフォーム')}
+- **構造要素**: 
+  {'- 表あり' if layout_info.get('has_tables') else ''}
+  {'- リストあり' if layout_info.get('has_lists') else ''}
+  {'- 画像あり' if layout_info.get('has_images') else ''}
 
-## 修正方針
+# 🎯 マルチモーダル修正戦略
 
-1. **文字認識の修正**
-   - 明らかな誤認識文字を正確に修正
-   - 文脈に合わない漢字を適切に修正
-   - 専門用語の正確性を保持
+## Phase 1: 情報源の信頼性評価
+### OCRテキストの品質分析:
+- 文字認識精度の評価
+- 構造的整合性の確認
+- 明らかなエラーパターンの特定
 
-2. **文書構造の保持**
-   - 表の構造とセルの境界を正確に保持
-   - リストの階層とインデントを維持
-   - 段落の区切りを適切に配置
+### Vision分析との照合:
+- 画像分析結果とOCRテキストの一致度
+- 文書タイプ・レイアウトとの整合性
+- 欠落情報・追加情報の特定
 
-3. **文脈の整合性**
-   - 画像分析結果とOCR結果の整合性を確保
-   - 文書タイプに応じた文体の統一
-   - 専門用語の一貫性を保持
+## Phase 2: 統合的エラー修正
+### 1. 構造レベルの修正
+- **表構造**: 画像分析に基づく行・列の復元
+- **リスト構造**: 階層とインデントの正確な再現
+- **段落構造**: 論理的な文書フローの維持
 
-4. **自然性の向上**
-   - 日本語として自然な表現に修正
-   - 句読点と改行を適切に配置
-   - 読みやすさを重視
+### 2. 文字レベルの高精度修正
+- **文脈認識修正**: 画像分析結果を活用した文字推定
+- **専門用語修正**: 文書タイプに基づく用語の正確性確保
+- **言語品質**: 自然で読みやすい日本語への最適化
 
-## 出力要件
+### 3. 意味レベルの整合性確保
+- **内容の一貫性**: 画像内容とテキスト内容の完全一致
+- **文脈の連続性**: 文書全体の論理的な流れの保持
+- **情報の完全性**: 欠落情報の補完と冗長情報の除去
 
-- 修正されたテキストのみを出力してください
-- 説明や注釈は含めないでください
-- 元の構造と意味を保持してください
-- 日本語として自然で正確な文章にしてください
+# 🔧 品質保証基準
 
-修正版テキスト:"""
+## 必須要件:
+✅ OCR誤認識の完全修正
+✅ 画像分析結果との100%整合性
+✅ 元の情報・意味の完全保持
+✅ 文書構造の正確な再現
+✅ 自然で読みやすい日本語
+
+## 禁止事項:
+❌ 元の情報の改変・追加
+❌ 画像分析結果との矛盾
+❌ 不自然な日本語表現
+❌ 構造情報の破損
+❌ 説明・注釈の追加
+
+# 📤 最終出力
+
+**重要**: 修正されたテキストのみを出力してください。説明、注釈、プロセス説明は一切含めないでください。
+
+**マルチモーダル統合修正結果**:"""
 
     def _clean_multimodal_response(self, response: str, original_text: str) -> str:
         """Clean up multimodal model response."""
-        # Remove common prefixes
+        # Remove common prefixes (expanded list for better cleaning)
         prefixes_to_remove = [
             "修正版テキスト:",
             "修正されたテキスト:",
@@ -495,55 +591,74 @@ class MultimodalOCR:
             "修正結果:",
             "出力:",
             "結果:",
+            "マルチモーダル統合修正結果:",
+            "最終出力:",
+            "テキスト:",
+            "回答:",
+            "修正後:",
+            "修正内容:",
         ]
-        
+
         cleaned = response.strip()
         for prefix in prefixes_to_remove:
             if cleaned.startswith(prefix):
-                cleaned = cleaned[len(prefix):].strip()
-        
+                cleaned = cleaned[len(prefix) :].strip()
+
         # Remove any remaining prompt artifacts
-        lines = cleaned.split('\n')
+        lines = cleaned.split("\n")
         filtered_lines = []
         for line in lines:
             # Skip lines that look like prompts or instructions
-            if not any(keyword in line for keyword in [
-                "修正", "分析", "文書", "画像", "OCR", "テキスト", "結果", "出力"
-            ]) or len(line.strip()) > 10:
+            if (
+                not any(
+                    keyword in line
+                    for keyword in [
+                        "修正",
+                        "分析",
+                        "文書",
+                        "画像",
+                        "OCR",
+                        "テキスト",
+                        "結果",
+                        "出力",
+                    ]
+                )
+                or len(line.strip()) > 10
+            ):
                 filtered_lines.append(line)
-        
-        result = '\n'.join(filtered_lines).strip()
-        
+
+        result = "\n".join(filtered_lines).strip()
+
         # If result is too different from original, return original
         if len(result) < len(original_text) * 0.5:
             logger.warning("Multimodal response seems too short, using original text")
             return original_text
-            
+
         return result
 
     def _calculate_corrections(self, original: str, corrected: str) -> int:
         """Calculate number of corrections made."""
         if not original or not corrected:
             return 0
-            
+
         # Simple character-level difference calculation
         # This could be enhanced with more sophisticated diff algorithms
         original_chars = list(original)
         corrected_chars = list(corrected)
-        
+
         # Use Levenshtein distance approximation
         max_len = max(len(original_chars), len(corrected_chars))
         min_len = min(len(original_chars), len(corrected_chars))
-        
+
         # Count character differences
         differences = 0
         for i in range(min_len):
             if original_chars[i] != corrected_chars[i]:
                 differences += 1
-        
+
         # Add length difference
         differences += max_len - min_len
-        
+
         return differences
 
     def _context_aware_fusion_fallback(
@@ -551,7 +666,7 @@ class MultimodalOCR:
     ) -> Tuple[str, int, float, str]:
         """Fallback to context-aware correction when multimodal fusion fails."""
         logger.debug("Using context-aware correction fallback")
-        
+
         # Create document metadata from vision analysis
         document_metadata = {
             "format": "image",
@@ -570,7 +685,12 @@ class MultimodalOCR:
         )
 
         correction_ratio = corrections_applied / len(ocr_text) if ocr_text else 0.0
-        return corrected_text, corrections_applied, correction_ratio, "context_aware_fallback"
+        return (
+            corrected_text,
+            corrections_applied,
+            correction_ratio,
+            "context_aware_fallback",
+        )
 
     def _extract_document_type(self, vision_analysis: Dict[str, Any]) -> str:
         """Extract document type from vision analysis."""

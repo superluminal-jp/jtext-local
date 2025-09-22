@@ -330,9 +330,9 @@ class TestMultimodalOCR:
         
         assert "OCRテキスト" in prompt
         assert "技術文書の画像です" in prompt
-        assert "修正方針" in prompt
-        assert "出力要件" in prompt
-        assert "修正版テキスト:" in prompt
+        assert "マルチモーダル修正戦略" in prompt
+        assert "品質保証基準" in prompt
+        assert "マルチモーダル統合修正結果" in prompt
 
     def test_clean_multimodal_response(self):
         """Test multimodal response cleaning."""
