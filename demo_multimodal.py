@@ -1,8 +1,20 @@
 """
-Demo script for multimodal OCR functionality.
+jtext Multimodal OCR Features Demo
 
-This script demonstrates the advanced multimodal OCR capabilities
-that combine traditional OCR with vision-language models for optimal results.
+This script demonstrates the cutting-edge multimodal OCR capabilities:
+- Traditional Tesseract OCR with preprocessing
+- Vision-Language Model analysis (LLaVA, BakLLaVA)
+- Multimodal fusion for optimal accuracy
+- LLM-powered context-aware correction
+- Comprehensive error handling and fallbacks
+
+Usage:
+    python demo_multimodal.py
+
+Requirements:
+    - Ollama running with vision models (llava, bakllava)
+    - jtext installed with all dependencies
+    - Sample images in the working directory
 """
 
 import click

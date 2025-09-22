@@ -1,37 +1,40 @@
+# jtext - Advanced Japanese Text Processing CLI System
+# Production Dependencies for Multimodal OCR with Vision-Language Models
+
 # Core Framework Dependencies
-click>=8.1.7
-pydantic>=2.4.2
-loguru>=0.7.2
+click>=8.1.7           # CLI framework with command groups and options
+pydantic>=2.4.2        # Data validation and settings management
+loguru>=0.7.2          # Structured logging with performance tracking
 
 # Document Processing
-unstructured[all-docs]>=0.10.30
-pymupdf>=1.23.8
-pytesseract>=0.3.10
-python-docx>=0.8.11
-python-pptx>=0.6.21
-html2text>=2020.1.16
+unstructured[all-docs]>=0.10.30  # Multi-format document parsing
+pymupdf>=1.23.8        # PDF text extraction and metadata
+pytesseract>=0.3.10    # Tesseract OCR Python wrapper
+python-docx>=0.8.11    # Microsoft Word document processing
+python-pptx>=0.6.21    # Microsoft PowerPoint processing
+html2text>=2020.1.16  # HTML to clean text conversion
 
-# Image Processing
-opencv-python>=4.8.0
-pillow>=10.0.1
-scikit-image>=0.21.0
+# Image Processing & Computer Vision
+opencv-python>=4.8.0   # Advanced image preprocessing and computer vision
+pillow>=10.0.1         # Image loading, manipulation, and format support
+scikit-image>=0.21.0   # Image processing algorithms
 
-# Audio Processing
-faster-whisper>=0.9.0
-ffmpeg-python>=0.2.0
+# Audio Processing & Transcription
+faster-whisper>=0.9.0  # Optimized Whisper ASR for Apple Silicon
+ffmpeg-python>=0.2.0   # Audio/video format conversion
 
-# LLM Integration
-ollama>=0.1.7
-transformers>=4.35.0
+# LLM Integration & Multimodal AI
+ollama>=0.1.7          # Local LLM server client for model management
+transformers>=4.35.0   # Hugging Face transformers for model utilities
 
 # System Utilities
-psutil>=5.9.6
-numpy>=1.24.3
-requests>=2.31.0
+psutil>=5.9.6          # System resource monitoring and management
+numpy>=1.24.3          # Numerical computing and array operations
+requests>=2.31.0       # HTTP client for API communication
 
-# Development Dependencies
-pytest>=7.4.3
-pytest-cov>=4.1.0
-black>=23.9.1
-flake8>=6.1.0
-mypy>=1.6.1
+# Development & Quality Assurance
+pytest>=7.4.3         # Testing framework with fixtures
+pytest-cov>=4.1.0     # Test coverage reporting
+black>=23.9.1          # Code formatting with 88-character lines
+flake8>=6.1.0          # Linting and style checking
+mypy>=1.6.1            # Static type checking
