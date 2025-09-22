@@ -18,30 +18,35 @@ A production-ready, high-precision local text extraction system for Japanese doc
 ## 🚀 Core Features
 
 ### 🖼️ Advanced Multimodal OCR
+
 - **Traditional OCR**: Tesseract with Japanese/English support
 - **Vision Analysis**: LLaVA/BakLLaVA integration for image understanding
 - **Multimodal Fusion**: Combines OCR text, vision analysis, and original image for optimal results
 - **Smart Preprocessing**: Deskewing, denoising, contrast enhancement, normalization
 
 ### 📄 Comprehensive Document Processing
+
 - **PDF Extraction**: Text and metadata with fallback OCR for scanned documents
 - **Office Documents**: DOCX, PPTX with structure preservation
 - **Web Content**: HTML with clean text extraction
 - **Image Formats**: PNG, JPG, TIFF, BMP, WEBP with advanced preprocessing
 
 ### 🎵 Audio Transcription
+
 - **Whisper Integration**: faster-whisper for efficient Japanese/English ASR
 - **Multiple Formats**: MP3, WAV, M4A, MP4, MOV support
 - **High Accuracy**: Optimized for Japanese speech recognition
 - **Batch Processing**: Multiple audio files with progress tracking
 
 ### 🤖 LLM-Powered Correction
+
 - **Context-Aware**: Document-type specific correction strategies
 - **Ollama Integration**: Local LLM processing with multiple model support
 - **Advanced Prompts**: Optimized prompts following AI best practices
 - **Error Prevention**: Comprehensive validation and fallback mechanisms
 
 ### 🔧 Production Features
+
 - **Structured Logging**: Comprehensive logging with loguru
 - **Error Handling**: Robust error handling with graceful fallbacks
 - **Metadata Rich**: Detailed JSON output with processing statistics
@@ -170,6 +175,7 @@ Options:
 ```
 
 **🎯 Processing Modes:**
+
 - **Basic OCR**: Tesseract only
 - **Vision Enhanced**: OCR + Vision analysis (⭐ Recommended)
 - **LLM Corrected**: OCR + LLM correction
@@ -199,12 +205,14 @@ Options:
 ```
 
 **📄 Document Processing:**
+
 - **PDF**: Text extraction + OCR fallback for scanned pages
 - **DOCX**: Microsoft Word with structure preservation
 - **PPTX**: PowerPoint with slide-by-slide processing
 - **HTML**: Web content with clean text extraction
 
 **🧠 Smart Features:**
+
 - Automatic format detection
 - Structure preservation (tables, lists, paragraphs)
 - Metadata extraction (author, creation date, page count)
@@ -229,11 +237,13 @@ Options:
 ```
 
 **🎵 Audio Processing:**
+
 - **Formats**: MP3, WAV, M4A, FLAC, MP4, MOV, AVI
 - **Languages**: Japanese, English, Chinese, Korean, French, German, Spanish, Italian, Russian
 - **Batch Processing**: Multiple files with progress tracking
 
 **🎯 Model Performance (Japanese optimized):**
+
 - **tiny**: ~32x realtime, 200MB VRAM
 - **base**: ~16x realtime, 500MB VRAM (⭐ Recommended)
 - **small**: ~6x realtime, 1GB VRAM
@@ -298,7 +308,12 @@ Comprehensive JSON metadata with processing insights:
     "characters_changed": 45,
     "words_changed": 12,
     "correction_ratio": 0.08,
-    "correction_types": ["kanji_fix", "punctuation", "layout", "vision_enhanced"]
+    "correction_types": [
+      "kanji_fix",
+      "punctuation",
+      "layout",
+      "vision_enhanced"
+    ]
   },
   "quality_metrics": {
     "character_count": 1847,
@@ -412,20 +427,20 @@ make lint
 
 ### ⚡ Processing Speed (Apple Silicon M2)
 
-| Operation | Basic OCR | Multimodal OCR | With LLM Correction |
-|-----------|-----------|----------------|---------------------|
-| **A4 Image** | 2-5 sec | 8-15 sec | 15-30 sec |
-| **PDF (10 pages)** | 30-60 sec | 60-120 sec | 120-240 sec |
-| **Audio (30 min)** | 10-15 min | N/A | 15-20 min |
+| Operation          | Basic OCR | Multimodal OCR | With LLM Correction |
+| ------------------ | --------- | -------------- | ------------------- |
+| **A4 Image**       | 2-5 sec   | 8-15 sec       | 15-30 sec           |
+| **PDF (10 pages)** | 30-60 sec | 60-120 sec     | 120-240 sec         |
+| **Audio (30 min)** | 10-15 min | N/A            | 15-20 min           |
 
 ### 🎯 Accuracy Metrics
 
-| Document Type | Basic OCR | Multimodal OCR | With LLM |
-|---------------|-----------|----------------|----------|
-| **Technical Docs** | 70-80% | 85-90% | **95-98%** |
-| **Business Docs** | 75-85% | 90-93% | **96-99%** |
-| **Handwritten** | 40-60% | 60-75% | **80-90%** |
-| **Scanned PDFs** | 65-75% | 80-88% | **92-96%** |
+| Document Type      | Basic OCR | Multimodal OCR | With LLM   |
+| ------------------ | --------- | -------------- | ---------- |
+| **Technical Docs** | 70-80%    | 85-90%         | **95-98%** |
+| **Business Docs**  | 75-85%    | 90-93%         | **96-99%** |
+| **Handwritten**    | 40-60%    | 60-75%         | **80-90%** |
+| **Scanned PDFs**   | 65-75%    | 80-88%         | **92-96%** |
 
 ### 💾 Resource Usage
 
@@ -447,6 +462,7 @@ make lint
 ### 🔧 Installation Issues
 
 **Tesseract not found**:
+
 ```bash
 # Install with Homebrew
 brew install tesseract tesseract-lang
@@ -456,6 +472,7 @@ tesseract --version
 ```
 
 **Python version incompatibility**:
+
 ```bash
 # Check Python version
 python3 --version  # Should be 3.12+
@@ -465,6 +482,7 @@ python3.12 -m pip install -e .
 ```
 
 **Permission errors**:
+
 ```bash
 # Fix permissions
 sudo chmod +x $(which jtext)
@@ -476,6 +494,7 @@ pip install --user -e .
 ### 🤖 LLM/Ollama Issues
 
 **Ollama not running**:
+
 ```bash
 # Start Ollama service
 brew services start ollama
@@ -485,6 +504,7 @@ curl http://localhost:11434/api/tags
 ```
 
 **Model not found**:
+
 ```bash
 # Pull required models
 ollama pull llava
@@ -495,6 +515,7 @@ ollama list
 ```
 
 **Vision model errors**:
+
 ```bash
 # Check vision model availability
 jtext ocr --vision --vision-model llava test.png
@@ -506,6 +527,7 @@ jtext ocr --vision --vision-model bakllava test.png
 ### 🖼️ Processing Issues
 
 **Poor OCR accuracy**:
+
 ```bash
 # Enable multimodal processing
 jtext ocr --vision --llm-correct document.png
@@ -518,6 +540,7 @@ jtext --verbose ocr document.png
 ```
 
 **Memory issues**:
+
 ```bash
 # Use smaller models
 jtext transcribe --model tiny audio.mp3
@@ -527,6 +550,7 @@ for file in *.png; do jtext ocr "$file"; done
 ```
 
 **Slow processing**:
+
 ```bash
 # Disable unnecessary features
 jtext ocr --no-correction document.png
