@@ -130,6 +130,10 @@ addopts = [
     "--cov-report=html",
     "--cov-fail-under=80",
 ]
+filterwarnings = [
+    "ignore:builtin type.*has no __module__ attribute:DeprecationWarning",
+    "ignore::DeprecationWarning",
+]
 
 [tool.coverage.run]
 source = ["jtext"]
