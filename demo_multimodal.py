@@ -225,6 +225,13 @@ def demo_full_multimodal():
         print(f"📈 Correction ratio: {result.correction_ratio:.2f}")
         print(f"🔧 Fusion method: {result.fusion_method}")
         print(f"📝 Text length: {len(result.text)} characters")
+        
+        # Show multimodal fusion details
+        if result.fusion_method == "multimodal_fusion":
+            print(f"\n🚀 Multimodal Fusion Details:")
+            print(f"   - Combined OCR text with vision analysis")
+            print(f"   - Applied context-aware correction")
+            print(f"   - Used original image for final validation")
 
         # Show processing pipeline
         pipeline = result.to_dict()["processing"]["pipeline"]

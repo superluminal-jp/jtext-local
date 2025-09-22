@@ -64,13 +64,13 @@ def cli(ctx: click.Context, verbose: bool, output_dir: str) -> None:
 @click.option("--vision-model", default="llava", help="Vision model for image analysis")
 @click.pass_context
 def ocr(
-    ctx: click.Context, 
-    images: List[str], 
-    lang: str, 
-    llm_correct: bool, 
+    ctx: click.Context,
+    images: List[str],
+    lang: str,
+    llm_correct: bool,
     vision: bool,
     model: str,
-    vision_model: str
+    vision_model: str,
 ) -> None:
     """
     Extract text from images using advanced OCR with vision analysis and LLM correction.
@@ -81,7 +81,9 @@ def ocr(
         click.echo("Error: No image files specified", err=True)
         raise click.Abort()
 
-    click.echo(f"Processing {len(images)} image(s) with {'multimodal ' if vision else ''}OCR...")
+    click.echo(
+        f"Processing {len(images)} image(s) with {'multimodal ' if vision else ''}OCR..."
+    )
 
     # Initialize OCR processor
     if vision:
@@ -89,13 +91,12 @@ def ocr(
             llm_model=model if llm_correct else None,
             vision_model=vision_model,
             enable_correction=llm_correct,
-            enable_vision=vision
+            enable_vision=vision,
         )
         click.echo(f"Using multimodal OCR with vision model: {vision_model}")
     else:
         ocr_processor = HybridOCR(
-            llm_model=model if llm_correct else None, 
-            enable_correction=llm_correct
+            llm_model=model if llm_correct else None, enable_correction=llm_correct
         )
 
     # Process each image
@@ -109,10 +110,12 @@ def ocr(
             save_results(result, output_path)
 
             # Show processing details
-            if hasattr(result, 'fusion_method'):
+            if hasattr(result, "fusion_method"):
                 click.echo(f"  Fusion method: {result.fusion_method}")
-            if hasattr(result, 'vision_analysis') and result.vision_analysis:
-                click.echo(f"  Vision analysis: {result.vision_analysis.get('model', 'N/A')}")
+            if hasattr(result, "vision_analysis") and result.vision_analysis:
+                click.echo(
+                    f"  Vision analysis: {result.vision_analysis.get('model', 'N/A')}"
+                )
 
             click.echo(f"✓ Completed: {output_path}.txt")
 

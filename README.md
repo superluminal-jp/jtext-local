@@ -22,6 +22,7 @@ A high-precision local text extraction system for Japanese documents, images, an
 - **Enhanced LLM Integration**: Ollama integration for real-time correction
 - **Context-Aware Correction**: Intelligent correction based on document type and context
 - **Multimodal OCR**: Vision-language models combined with traditional OCR for optimal accuracy
+- **Multimodal Fusion**: Advanced correction using vision analysis, OCR text, and original image for comprehensive text optimization
 - **Multi-Format Support**: Images, Documents, Audio with unified processing pipeline
 
 ### System Features
@@ -82,6 +83,9 @@ jtext ocr document.png
 jtext ocr --llm-correct image1.jpg image2.png
 
 # Process with vision analysis and LLM correction
+jtext ocr --vision --llm-correct --vision-model llava document.png
+
+# Process with advanced multimodal fusion (combines vision analysis, OCR text, and original image)
 jtext ocr --vision --llm-correct --vision-model llava document.png
 
 # Specify output directory

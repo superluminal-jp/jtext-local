@@ -262,13 +262,13 @@ class MultimodalOCR:
             response = requests.post(
                 "http://localhost:11434/api/generate",
                 json=payload,
-                timeout=60,
+                timeout=300,
             )
 
             if response.status_code == 200:
                 result = response.json()
                 vision_text = result.get("response", "").strip()
-                
+
                 return {
                     "model": self.vision_model,
                     "analysis": vision_text,
@@ -316,10 +316,242 @@ class MultimodalOCR:
     def _fuse_with_vision(
         self, ocr_text: str, vision_analysis: Dict[str, Any], image_path: str
     ) -> Tuple[str, int, float, str]:
-        """Fuse OCR and vision results using context-aware correction."""
+        """Fuse OCR and vision results using multimodal model for comprehensive analysis."""
         if not self.context_corrector:
             return self._correct_ocr_only(ocr_text)
 
+        # Step 4: Multimodal fusion with comprehensive analysis
+        try:
+            # Use multimodal model for comprehensive text correction
+            corrected_text, corrections_applied = self._multimodal_fusion_correction(
+                ocr_text, vision_analysis, image_path
+            )
+            
+            correction_ratio = corrections_applied / len(ocr_text) if ocr_text else 0.0
+            return corrected_text, corrections_applied, correction_ratio, "multimodal_fusion"
+            
+        except Exception as e:
+            logger.warning(f"Multimodal fusion failed, falling back to context-aware correction: {e}")
+            # Fallback to context-aware correction
+            return self._context_aware_fusion_fallback(ocr_text, vision_analysis)
+
+    def _correct_ocr_only(self, ocr_text: str) -> Tuple[str, int, float, str]:
+        """Apply standard OCR correction."""
+        if not self.corrector:
+            return ocr_text, 0, 0.0, "ocr_only"
+
+        corrected_text, corrections_applied = self.corrector.correct(ocr_text)
+        correction_ratio = corrections_applied / len(ocr_text) if ocr_text else 0.0
+
+        return corrected_text, corrections_applied, correction_ratio, "ocr_correction"
+
+    def _multimodal_fusion_correction(
+        self, ocr_text: str, vision_analysis: Dict[str, Any], image_path: str
+    ) -> Tuple[str, int]:
+        """
+        Perform comprehensive multimodal fusion correction using vision model.
+        
+        This method combines:
+        1. OCR extracted text
+        2. Vision analysis results
+        3. Original image
+        4. Contextual metadata
+        
+        To produce the most accurate and coherent text output.
+        """
+        logger.debug("Starting multimodal fusion correction")
+        
+        try:
+            # Encode image to base64 for multimodal input
+            with open(image_path, "rb") as image_file:
+                image_data = base64.b64encode(image_file.read()).decode("utf-8")
+
+            # Create comprehensive multimodal prompt
+            multimodal_prompt = self._create_multimodal_fusion_prompt(
+                ocr_text, vision_analysis
+            )
+
+            # Prepare multimodal payload
+            payload = {
+                "model": self.vision_model,
+                "prompt": multimodal_prompt,
+                "images": [image_data],
+                "stream": False,
+                "options": {
+                    "temperature": 0.05,  # Very low temperature for consistency
+                    "top_p": 0.85,
+                    "max_tokens": 2048,
+                    "repeat_penalty": 1.1,
+                },
+            }
+
+            logger.debug("Calling multimodal fusion model")
+            response = requests.post(
+                "http://localhost:11434/api/generate",
+                json=payload,
+                timeout=300,
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                corrected_text = result.get("response", "").strip()
+                
+                # Clean up the response
+                corrected_text = self._clean_multimodal_response(corrected_text, ocr_text)
+                
+                # Calculate corrections
+                corrections_applied = self._calculate_corrections(ocr_text, corrected_text)
+                
+                logger.info(f"Multimodal fusion completed: {corrections_applied} corrections applied")
+                return corrected_text, corrections_applied
+            else:
+                logger.error(f"Multimodal fusion failed: {response.status_code}")
+                raise Exception(f"API error: {response.status_code}")
+
+        except Exception as e:
+            logger.error(f"Multimodal fusion error: {e}")
+            raise
+
+    def _create_multimodal_fusion_prompt(
+        self, ocr_text: str, vision_analysis: Dict[str, Any]
+    ) -> str:
+        """
+        Create comprehensive multimodal fusion prompt following best practices.
+        
+        This prompt combines all available information to produce the most accurate result.
+        """
+        vision_analysis_text = vision_analysis.get("analysis", "")
+        document_type = self._extract_document_type(vision_analysis)
+        layout_info = self._extract_layout_info(vision_analysis)
+        
+        # Build context information
+        context_info = []
+        if document_type != "general":
+            context_info.append(f"文書タイプ: {document_type}")
+        
+        if layout_info.get("has_tables"):
+            context_info.append("表が含まれています")
+        if layout_info.get("has_lists"):
+            context_info.append("リストが含まれています")
+        if layout_info.get("has_images"):
+            context_info.append("画像が含まれています")
+        
+        context_str = "、".join(context_info) if context_info else "一般的な文書"
+        
+        return f"""あなたは高精度なOCR修正専門家です。以下の情報を総合的に分析し、最も正確で自然な日本語テキストを出力してください。
+
+## 分析対象情報
+
+### 1. OCR抽出テキスト（修正対象）
+```
+{ocr_text}
+```
+
+### 2. 画像分析結果
+{vision_analysis_text}
+
+### 3. 文書コンテキスト
+- {context_str}
+- レイアウトタイプ: {layout_info.get('layout_type', 'freeform')}
+
+## 修正方針
+
+1. **文字認識の修正**
+   - 明らかな誤認識文字を正確に修正
+   - 文脈に合わない漢字を適切に修正
+   - 専門用語の正確性を保持
+
+2. **文書構造の保持**
+   - 表の構造とセルの境界を正確に保持
+   - リストの階層とインデントを維持
+   - 段落の区切りを適切に配置
+
+3. **文脈の整合性**
+   - 画像分析結果とOCR結果の整合性を確保
+   - 文書タイプに応じた文体の統一
+   - 専門用語の一貫性を保持
+
+4. **自然性の向上**
+   - 日本語として自然な表現に修正
+   - 句読点と改行を適切に配置
+   - 読みやすさを重視
+
+## 出力要件
+
+- 修正されたテキストのみを出力してください
+- 説明や注釈は含めないでください
+- 元の構造と意味を保持してください
+- 日本語として自然で正確な文章にしてください
+
+修正版テキスト:"""
+
+    def _clean_multimodal_response(self, response: str, original_text: str) -> str:
+        """Clean up multimodal model response."""
+        # Remove common prefixes
+        prefixes_to_remove = [
+            "修正版テキスト:",
+            "修正されたテキスト:",
+            "修正版:",
+            "修正結果:",
+            "出力:",
+            "結果:",
+        ]
+        
+        cleaned = response.strip()
+        for prefix in prefixes_to_remove:
+            if cleaned.startswith(prefix):
+                cleaned = cleaned[len(prefix):].strip()
+        
+        # Remove any remaining prompt artifacts
+        lines = cleaned.split('\n')
+        filtered_lines = []
+        for line in lines:
+            # Skip lines that look like prompts or instructions
+            if not any(keyword in line for keyword in [
+                "修正", "分析", "文書", "画像", "OCR", "テキスト", "結果", "出力"
+            ]) or len(line.strip()) > 10:
+                filtered_lines.append(line)
+        
+        result = '\n'.join(filtered_lines).strip()
+        
+        # If result is too different from original, return original
+        if len(result) < len(original_text) * 0.5:
+            logger.warning("Multimodal response seems too short, using original text")
+            return original_text
+            
+        return result
+
+    def _calculate_corrections(self, original: str, corrected: str) -> int:
+        """Calculate number of corrections made."""
+        if not original or not corrected:
+            return 0
+            
+        # Simple character-level difference calculation
+        # This could be enhanced with more sophisticated diff algorithms
+        original_chars = list(original)
+        corrected_chars = list(corrected)
+        
+        # Use Levenshtein distance approximation
+        max_len = max(len(original_chars), len(corrected_chars))
+        min_len = min(len(original_chars), len(corrected_chars))
+        
+        # Count character differences
+        differences = 0
+        for i in range(min_len):
+            if original_chars[i] != corrected_chars[i]:
+                differences += 1
+        
+        # Add length difference
+        differences += max_len - min_len
+        
+        return differences
+
+    def _context_aware_fusion_fallback(
+        self, ocr_text: str, vision_analysis: Dict[str, Any]
+    ) -> Tuple[str, int, float, str]:
+        """Fallback to context-aware correction when multimodal fusion fails."""
+        logger.debug("Using context-aware correction fallback")
+        
         # Create document metadata from vision analysis
         document_metadata = {
             "format": "image",
@@ -329,34 +561,21 @@ class MultimodalOCR:
         }
 
         # Use context-aware correction with vision context
-        corrected_text, corrections_applied = self.context_corrector.correct_with_context(
-            text=ocr_text,
-            context_type="vision_enhanced",
-            document_metadata=document_metadata,
+        corrected_text, corrections_applied = (
+            self.context_corrector.correct_with_context(
+                text=ocr_text,
+                context_type="vision_enhanced",
+                document_metadata=document_metadata,
+            )
         )
 
-        correction_ratio = (
-            corrections_applied / len(ocr_text) if ocr_text else 0.0
-        )
-
-        return corrected_text, corrections_applied, correction_ratio, "vision_fusion"
-
-    def _correct_ocr_only(self, ocr_text: str) -> Tuple[str, int, float, str]:
-        """Apply standard OCR correction."""
-        if not self.corrector:
-            return ocr_text, 0, 0.0, "ocr_only"
-
-        corrected_text, corrections_applied = self.corrector.correct(ocr_text)
-        correction_ratio = (
-            corrections_applied / len(ocr_text) if ocr_text else 0.0
-        )
-
-        return corrected_text, corrections_applied, correction_ratio, "ocr_correction"
+        correction_ratio = corrections_applied / len(ocr_text) if ocr_text else 0.0
+        return corrected_text, corrections_applied, correction_ratio, "context_aware_fallback"
 
     def _extract_document_type(self, vision_analysis: Dict[str, Any]) -> str:
         """Extract document type from vision analysis."""
         analysis = vision_analysis.get("analysis", "").lower()
-        
+
         if "技術" in analysis or "technical" in analysis:
             return "technical"
         elif "学術" in analysis or "論文" in analysis:
@@ -371,7 +590,7 @@ class MultimodalOCR:
     def _extract_layout_info(self, vision_analysis: Dict[str, Any]) -> Dict[str, Any]:
         """Extract layout information from vision analysis."""
         analysis = vision_analysis.get("analysis", "")
-        
+
         return {
             "has_tables": "表" in analysis or "table" in analysis,
             "has_images": "画像" in analysis or "image" in analysis,
