@@ -1,0 +1,151 @@
+# Pre-commit configuration for jtext
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+repos:
+  # Code formatting
+  - repo: https://github.com/psf/black
+    rev: 23.9.1
+    hooks:
+      - id: black
+        language_version: python3.12
+        args: [--line-length=88, --target-version=py312]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: [--profile=black, --line-length=88]
+
+  # Linting
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        args: [--max-line-length=88, --extend-ignore=E203, W503]
+        additional_dependencies: [flake8-docstrings, flake8-bugbear]
+
+  - repo: https://github.com/pycqa/pylint
+    rev: v3.0.2
+    hooks:
+      - id: pylint
+        args: [--disable=C0114, C0116, R0903, R0913, W0613]
+        additional_dependencies: [pylint-django]
+
+  # Type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.6.1
+    hooks:
+      - id: mypy
+        args: [--strict, --ignore-missing-imports]
+        additional_dependencies: [types-requests, types-Pillow]
+
+  # Security
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        args: [-r, ., -f, json, -o, bandit-report.json]
+        exclude: tests/
+
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.2
+    hooks:
+      - id: python-safety-dependencies-check
+
+  # Code quality
+  - repo: https://github.com/pycqa/radon
+    rev: 6.0.1
+    hooks:
+      - id: radon-cc
+        args: [--min=B, --show-complexity]
+
+  - repo: https://github.com/pycqa/radon
+    rev: 6.0.1
+    hooks:
+      - id: radon-mi
+        args: [--min=B]
+
+  # Documentation
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        args: [--convention=google]
+
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: debug-statements
+      - id: check-docstring-first
+      - id: requirements-txt-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # Python specific
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.15.0
+    hooks:
+      - id: pyupgrade
+        args: [--py312-plus]
+
+  - repo: https://github.com/asottile/autopep8
+    rev: v2.0.4
+    hooks:
+      - id: autopep8
+        args: [--in-place, --aggressive, --aggressive]
+
+  # Import sorting
+  - repo: https://github.com/pycqa/autoflake
+    rev: v2.2.1
+    hooks:
+      - id: autoflake
+        args:
+          [--remove-all-unused-imports, --remove-unused-variables, --in-place]
+
+  # Testing
+  - repo: https://github.com/pre-commit/mirrors-pytest
+    rev: v7.4.3
+    hooks:
+      - id: pytest-check
+        args: [--maxfail=1, --tb=short]
+
+  # Git hooks
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.13.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # File checks
+  - repo: local
+    hooks:
+      - id: check-python-syntax
+        name: Check Python syntax
+        entry: python -m py_compile
+        language: system
+        types: [python]
+        files: \.py$
+
+      - id: check-imports
+        name: Check imports
+        entry: python -c "import ast; [ast.parse(open(f).read()) for f in ['jtext/__init__.py', 'jtext/cli.py']]"
+        language: system
+        files: ^jtext/.*\.py$
+
+      - id: check-docstrings
+        name: Check docstrings
+        entry: python -c "import ast, sys; [print(f'Missing docstring in {f}') for f in sys.argv[1:] if not ast.parse(open(f).read()).body[0].docstring]" --
+        language: system
+        files: ^jtext/.*\.py$
+        exclude: ^jtext/__init__\.py$

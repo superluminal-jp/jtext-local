@@ -2,13 +2,17 @@
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+include = ["jtext*"]
+exclude = ["tests*", "logs*", "htmlcov*", "venv*"]
+
 [project]
 name = "jtext"
 version = "1.0.0"
 description = "High-precision local text extraction for Japanese documents, images, and audio"
 readme = "README.md"
 requires-python = ">=3.12"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "jtext Development Team", email = "dev@jtext.local"},
 ]
@@ -17,7 +21,6 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: MacOS",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
@@ -58,7 +61,7 @@ dev = [
 ]
 
 [project.scripts]
-jtext = "jtext.cli:cli"
+jtext = "jtext.interface.cli:cli"
 
 [project.urls]
 Homepage = "https://github.com/jtext/jtext-local"
